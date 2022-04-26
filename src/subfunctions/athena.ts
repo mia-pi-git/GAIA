@@ -53,7 +53,7 @@ export class Athena extends Subfunction {
     }
     close() {}
     commands: Commands = {
-        'toggle ATHENA': 'togglemod',
+        'toggle ATHENA in': 'togglemod',
         async togglemod(target, room, user, subfunction) {
             target = GAIA.toID(target);
             if (!room) {
