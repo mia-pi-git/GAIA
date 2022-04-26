@@ -49,6 +49,7 @@ export class Hermes extends Subfunction {
             }
         }
         // command = GAIA.toID(command);
+        const cmd = command;
         while (typeof this.commandTable[command] === 'string') {
             command = this.commandTable[command] as string;
         }
@@ -61,7 +62,7 @@ export class Hermes extends Subfunction {
             const handler = this.commandTable[command] as KeyedCommand;
             await handler.call(
                 message, target, message.room || null,
-                message.from, handler.subfunction
+                message.from, handler.subfunction, cmd
             );
         } catch (e) {
             this.log(e);

@@ -8,7 +8,7 @@ import {GAIA} from './main';
 
 export type CommandHandler = (
     this: PS.Message, target: string, room: PS.Room | null, 
-    user: PS.User, subfunction: Subfunction,
+    user: PS.User, subfunction: Subfunction, cmd: string,
 ) => void | Promise<void>;
 export type Commands = Record<string, CommandHandler | string>;
 
@@ -18,6 +18,7 @@ export class SubfunctionTable extends Map<string, Subfunction> {
     get(key: `APOLLO`): import('./subfunctions/apollo').default;
     get(key: `HERMES`): import('./subfunctions/hermes').default;
     get(key: `ATHENA`): import('./subfunctions/athena').default;
+    get(key: `NIKE`): import('./subfunctions/nike').default;
     get(key: string): Subfunction | undefined;
     get(key: string) {
         return super.get(key);

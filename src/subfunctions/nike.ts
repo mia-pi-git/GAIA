@@ -10,6 +10,14 @@ const MINUTE = 60000;
 const INTERVAL = 1000;
 const FACTOR = 1.5;
 
+interface TrackerConfig {
+    format?: string;
+    prefix?: string;
+    rating?: number;
+    deadline?: string;
+    cutoff?: number;
+}
+
 interface Battle {
     p1: string;
     p2: string;
@@ -34,8 +42,8 @@ interface LeaderboardEntry {
 type ID = string;
 
 class LadderTracker {
-    private readonly config: any;
-  
+    private readonly config: TrackerConfig;
+
     private format: ID;
     private prefix: ID;
     private deadline?: Date;
@@ -53,7 +61,7 @@ class LadderTracker {
     private changed?: boolean;
     private lines: { them: number; total: number };
   
-    constructor(public room: PS.Room, private parent: Nike, config: any) {
+    constructor(public room: PS.Room, private parent: Nike, config: TrackerConfig) {
         this.config = config;
 
         this.format = GAIA.toID(config.format);
@@ -400,6 +408,64 @@ export class Nike extends Subfunction {
         for (const tracker of this.trackers.values()) {
             tracker.onQueryresponse(data);
         }
+    }
+    commands: Commands = {
+        'override NIKE tracking for': 'set NIKE to track',
+        'set NIKE to track'(target, room, user, sf, cmd) {
+            if (!room) {
+                return this.respond("This command can only be used in a room.");
+            }
+            this.room = null;
+            if (!this.isRank('%')) {
+                return this.respond('Access denied.');
+            }
+            const nike = GAIA.subfunctions.get('NIKE');
+            if (nike.trackers.has(room.id) && !cmd.includes('override')) {
+                return this.respond(
+                    "NIKE already has a tracker running for that room. " +
+                    "To override this, ask GAIA to 'override NIKE tracking for' that room."
+                );
+            }
+            const config: Partial<TrackerConfig> = {};
+            /*cutoff?: number;*/
+            const rating = Number(/rating ([0-9]+)/.exec(target)?.[1]);
+            if (!rating || rating < 1000) {
+                return this.respond("Invalid rating. Must be a number above 1000.");
+            }
+            config.rating = rating;
+            const rawCutoff = /cutoff ([0-9]+)/.exec(target)?.[1];
+            const cutoff = Number(rawCutoff);
+            if (rawCutoff && (!cutoff || cutoff < 1000)) {
+                return this.respond("Invalid cutoff. Must be a number above 1000.");
+            }
+            if (cutoff) {
+                config.cutoff = cutoff;
+            }
+            let deadline = /the deadline ([a-zA-Z0-9-\s:]+)/i.exec(target)?.[1];
+            if (deadline && +new Date(deadline)) {
+                config.deadline = new Date(deadline).toString();
+            }
+            const format = GAIA.toID(/format ([a-zA-Z0-9]+)/i.exec(target)?.[1]);
+            if (!format) {
+                return this.respond("You must specify a format.");
+            }
+            config.format = format;
+            const prefix = GAIA.toID(/format ([a-zA-Z0-9]+)/i.exec(target)?.[1]);
+            if (!prefix) {
+                return this.respond("You must specify a prefix.");
+            }
+            config.prefix = prefix;
+
+            if (!nike.config.rooms) nike.config.rooms = {};
+            nike.config.rooms[room.id] = config;
+            const tracker = new LadderTracker(room, nike, config as TrackerConfig);
+            tracker.start();
+            nike.trackers.set(room.id, tracker);
+            this.respond("NIKE tracking started.");
+        },
+        niketrack(target, room, user) {
+
+        },
     }
 }
 
