@@ -458,9 +458,11 @@ export class Nike extends Subfunction {
 
             if (!nike.config.rooms) nike.config.rooms = {};
             nike.config.rooms[room.id] = config;
+            nike.saveData();
             const tracker = new LadderTracker(room, nike, config as TrackerConfig);
             tracker.start();
             nike.trackers.set(room.id, tracker);
+            this.room = room;
             this.respond("NIKE tracking started.");
         },
         niketrack(target, room, user) {
