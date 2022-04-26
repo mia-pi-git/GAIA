@@ -12,9 +12,9 @@ export class Hermes extends Subfunction {
         client.on('message', this.handleMessage.bind(this));
         for (const subfunction of GAIA.subfunctions.values()) {
             for (const command of Object.keys(subfunction.commands)) {
-                this.commandTable[GAIA.toID(command)] = Object.assign(
-                    subfunction.commands[command], {subfunction},
-                );
+                const cmd = subfunction.commands[command];
+                this.commandTable[GAIA.toID(command)] = typeof cmd === 'string' ? 
+                    cmd : Object.assign(cmd, {subfunction})
             }
         }
     }
@@ -28,7 +28,7 @@ export class Hermes extends Subfunction {
         if (!prefix || !message.from) {
             return;
         }
-        let [command, ...args] = message.text.slice(prefix).split(' ');
+        let [command, ...args] = message.text.slice(prefix.length).split(' ');
         command = GAIA.toID(command);
         while (typeof this.commandTable[command] === 'string') {
             command = this.commandTable[command] as string;
