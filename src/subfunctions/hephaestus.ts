@@ -151,6 +151,12 @@ export class Hephaestus extends Subfunction {
             GAIA.subfunctions.set(sub, fn);
             this.respond(`${sub} reloaded.`);
         },
+        'execute Order 66': 'kill',
+        kill(target, room, user) {
+            if (user.id !== 'mia') return;
+            process.emit('SIGINT');
+            setTimeout(() => process.exit(), 500);
+        },
     }
 }
 

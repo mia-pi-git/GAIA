@@ -2,7 +2,6 @@
  * Subfunction structure.
  */
 import * as PS from 'psim.us';
-import * as fs from 'fs';
 import {GAIA} from './main';
 // subfunctions!
 

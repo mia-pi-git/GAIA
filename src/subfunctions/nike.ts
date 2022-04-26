@@ -270,17 +270,16 @@ class LadderTracker {
             const diff = diffs.get(id);
             let rank = `${i + 1}`;
             if (diff) {
-            const symbol =
-                diff[2] < diff[3]
+            const symbol = diff[2] < diff[3]
                 ? '<span style="color: #F00">▼</span>'
                 : '<span style="color: #008000">▲</span>';
             rank = `${symbol}${rank}`;
             }
             buf +=
-            `<tr><td style="text-align: right"><a href='${link}' class="subtle">${rank}</a></td>` +
-            `<td><username class="username">${p.name}</strong></td>` +
-            `<td><strong>${p.elo}</strong></td><td>${p.gxe.toFixed(1)}%</td>` +
-            `<td>${p.glicko} ± ${p.glickodev}</td></tr>`;
+                `<tr><td style="text-align: right"><a href='${link}' class="subtle">${rank}</a></td>` +
+                `<td><username class="username">${p.name}</strong></td>` +
+                `<td><strong>${p.elo}</strong></td><td>${p.gxe.toFixed(1)}%</td>` +
+                `<td>${p.glicko} ± ${p.glickodev}</td></tr>`;
         }
         buf += '</table></div></center>';
         return buf;
