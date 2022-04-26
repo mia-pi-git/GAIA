@@ -1,0 +1,9 @@
+{
+    "name": "GAIA",
+    "pass": "uwu",
+    "avatar": 100,
+    "status": "",
+    "prefix": ".",
+    "reconnectMs": 10000,
+    "rooms": []
+}

@@ -1,0 +1,69 @@
+/**
+ * Handles dispatching commands and info.
+ */
+
+import * as PS from 'psim.us';
+import {Subfunction, CommandHandler} from '../subfunction';
+
+export class Hermes extends Subfunction {
+    commandTable: Record<string, CommandHandler & {subfunction: Subfunction}> = {};
+    register(client: PS.Client) {
+        client.on('message', this.handleMessage.bind(this));
+        for (const subfunction of GAIA.subfunctions.values()) {
+            for (const command of Object.keys(subfunction.commands)) {
+                this.commandTable[GAIA.toID(command)] = Object.assign(
+                    subfunction.commands[command], {subfunction},
+                );
+            }
+        }
+    }
+    async handleMessage(message: PS.Message) {
+        if (!message.text.startsWith(this.config.prefix) || !message.from) {
+            return;
+        }
+        let [command, ...args] = message.text
+            .slice(this.config.prefix.length)
+            .split(' ');
+        command = GAIA.toID(command);
+        const target = args.join(' ');
+        if (!(command in this.commandTable)) {
+            return message.respond("Command not found.");
+        }
+        try {
+            await this.commandTable[command].call(
+                message, target, message.room || null,
+                message.from, this.commandTable[command].subfunction
+            );
+        } catch (e) {
+            this.log(e);
+            return message.respond("An error occurred. Please stand by.");
+        }
+    }
+    commands: Record<string, CommandHandler> = {
+        async join(target, room, user, subfunction) {
+            if (room) {
+                // need to check gauth
+                this.room = null;
+            }
+            if (!this.isRank("%")) {
+                return this.respond("Access denied.");
+            }
+            if (!target) {
+                return this.respond("No room specified.");
+            }
+            const roomId = GAIA.toID(target);
+            const found = await this.client.rooms.get(roomId);
+            if (!found) {
+                return this.respond(`Room '${roomId}' not found or is inaccessible.`);
+            }
+            if (subfunction.config.rooms.includes(found.id)) {
+                return this.respond("Room already joined.");
+            }
+            GAIA.config.rooms.push(found.id);
+            GAIA.saveConfig();
+            this.client.send(`|/join ${roomId}`);
+        },
+    }
+}
+
+export default Hermes;
