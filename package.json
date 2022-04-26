@@ -2,8 +2,7 @@
 	"name": "gaia",
 	"dependencies": {
 		"@types/node": "^17.0.27",
-		"psim.us": "^1.1.5",
-		"pythonia": "^0.2.16"
+		"psim.us": "^1.1.5"
 	},
 	"scripts": {
 		"start": "npx tsc && node dist"
