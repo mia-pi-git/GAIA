@@ -73,7 +73,27 @@ export class Hermes extends Subfunction {
             GAIA.saveConfig();
             this.client.send(`|/join ${roomId}`);
         },
-    }
+        leave(target, room, user) {
+            if (room && !target) {
+                target = room.id;
+            }
+            this.room = null;
+            if (!this.isRank('#')) {
+                if (!room) return this.respond("Access denied.");
+                return;
+            }
+            if (!target) {
+                return this.respond("No room specified.");
+            }
+            const roomId = GAIA.toID(target);
+            if (!GAIA.config.rooms.includes(roomId)) {
+                return this.respond("Room not joined.");
+            }
+            GAIA.config.rooms.splice(GAIA.config.rooms.indexOf(roomId), 1);
+            GAIA.saveConfig();
+            GAIA.client.send(`${roomId}|/leave`);
+        },
+    };
 }
 
 export default Hermes;
