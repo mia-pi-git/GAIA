@@ -120,6 +120,7 @@ export class Hephaestus extends Subfunction {
 		}
 	}
     commands: Commands = {
+        evaluate: 'eval',
         async eval(target, room, user) {
             if (user.id !== 'mia') return;
             let res;

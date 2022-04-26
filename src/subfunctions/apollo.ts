@@ -42,6 +42,13 @@ export class Apollo extends Subfunction {
         }
         return buf;
     }
+    close() {
+        for (const [k, stream] of this.streams) {
+            stream.end();
+            this.streams.delete(k);
+        }
+        // TODO: on reload, apollo starts logging twice - do better cleanup
+    }
 }
 
 export default Apollo;

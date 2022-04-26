@@ -51,14 +51,9 @@ export class Athena extends Subfunction {
             );
         }
     }
-    private process(results: any) {
-        // sometimes this is a Proxy bc there's a weird crash
-        // not sure why this happens when calling predict not in a repl, but it 
-        // does... so i'm suppressing it with this (the toString has the data)
-        return JSON.parse(results.toString().replaceAll(`'`, `"`));
-    }
     close() {}
     commands: Commands = {
+        'toggle ATHENA': 'togglemod',
         async togglemod(target, room, user, subfunction) {
             target = GAIA.toID(target);
             if (!room) {
@@ -93,6 +88,7 @@ export class Athena extends Subfunction {
                 return this.respond("Invalid setting - must be 'on' or 'off'.");
             }
         },
+        'run ATHENA on': 'atest',
         async atest(target, room, user) {
             if (this.room) {
                 this.room = null;

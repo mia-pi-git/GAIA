@@ -210,18 +210,18 @@ class LadderTracker {
             const response = await fetch(url).then(res => res.json());
             this.leaderboard.lookup = new Map();
             for (const data of response.toplist) {
-            // TODO: move the rounding until later
-            const entry: LeaderboardEntry = {
-                name: data.username,
-                elo: Math.round(data.elo),
-                gxe: data.gxe,
-                glicko: Math.round(data.rpr),
-                glickodev: Math.round(data.rprd),
-            };
-            this.leaderboard.lookup.set(data.userid, entry);
-            if (!data.userid.startsWith(this.prefix)) continue;
-            entry.rank = leaderboard.length + 1;
-            leaderboard.push(entry);
+                // TODO: move the rounding until later
+                const entry: LeaderboardEntry = {
+                    name: data.username,
+                    elo: Math.round(data.elo),
+                    gxe: data.gxe,
+                    glicko: Math.round(data.rpr),
+                    glickodev: Math.round(data.rprd),
+                };
+                this.leaderboard.lookup.set(data.userid, entry);
+                if (!data.userid.startsWith(this.prefix)) continue;
+                entry.rank = leaderboard.length + 1;
+                leaderboard.push(entry);
             }
             if (display) {
             this.report(`/addhtmlbox ${this.styleLeaderboard(leaderboard)}`);

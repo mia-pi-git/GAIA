@@ -5,8 +5,9 @@
 import * as PS from 'psim.us';
 import {Subfunction, CommandHandler} from '../subfunction';
 
+type KeyedCommand = CommandHandler & {subfunction: Subfunction};
 export class Hermes extends Subfunction {
-    commandTable: Record<string, CommandHandler & {subfunction: Subfunction}> = {};
+    commandTable: Record<string, KeyedCommand | string> = {};
     register(client: PS.Client) {
         client.on('message', this.handleMessage.bind(this));
         for (const subfunction of GAIA.subfunctions.values()) {
@@ -18,21 +19,30 @@ export class Hermes extends Subfunction {
         }
     }
     async handleMessage(message: PS.Message) {
-        if (!message.text.startsWith(this.config.prefix) || !message.from) {
+        if (!Array.isArray(this.config.prefix)) {
+            this.config.prefix = [this.config.prefix];
+            GAIA.saveConfig();
+        }
+        const prefix = this.config.prefix
+            .filter((f: string) => message.text.startsWith(f))[0];
+        if (!prefix || !message.from) {
             return;
         }
-        let [command, ...args] = message.text
-            .slice(this.config.prefix.length)
-            .split(' ');
+        let [command, ...args] = message.text.slice(prefix).split(' ');
         command = GAIA.toID(command);
+        while (typeof this.commandTable[command] === 'string') {
+            command = this.commandTable[command] as string;
+        }
         const target = args.join(' ');
         if (!(command in this.commandTable)) {
-            return message.respond("Command not found.");
+            if (!message.room) return message.respond("Command not found.");
+            return;
         }
         try {
-            await this.commandTable[command].call(
+            const handler = this.commandTable[command] as KeyedCommand;
+            await handler.call(
                 message, target, message.room || null,
-                message.from, this.commandTable[command].subfunction
+                message.from, handler.subfunction
             );
         } catch (e) {
             this.log(e);
