@@ -14,7 +14,7 @@ export class Hephaestus extends Subfunction {
     pathnames = new Set<string>();
     async register() {
         // attached to GAIA so evals can be done in that context
-        this.start('app', GAIA.eval);
+        this.start('app', cmd => eval(cmd));
     }
     start(filename: string, evalFn: (input: string) => any) {
 		this.setupListeners();
@@ -125,11 +125,13 @@ export class Hephaestus extends Subfunction {
             if (user.id !== 'mia') return;
             let res;
             try {
-                res = await Promise.resolve(GAIA.eval(target));
+                res = await Promise.resolve(eval(target));
             } catch (e: any) {
                 res = `Error: ${e.stack}`;
             }
-            this.respond(`!code ${util.inspect(res)}`);
+			res = util.inspect(res);
+			res = res.replace(new RegExp(GAIA.config.pass, "g"), "[redacted]");
+            this.respond(`!code ${res}`);
         },
         async reload(target, room, user) {
             if (user.id !== 'mia') return;

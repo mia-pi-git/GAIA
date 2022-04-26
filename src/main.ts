@@ -23,7 +23,7 @@ export class GAIA {
             );
         }
 
-        this.eval = eval;
+        // this.eval = (cmd: string) => eval(cmd);
 
         for (const [name, sub] of loaded) {
             await sub.register(this.client);
@@ -45,5 +45,4 @@ export class GAIA {
     send(message: string) {
         this.client.send(message);
     }
-    eval!: typeof eval;
 }
