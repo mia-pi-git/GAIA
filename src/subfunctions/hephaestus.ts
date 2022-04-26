@@ -9,6 +9,7 @@ import * as repl from 'repl';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as child_process from 'child_process';
 
 export class Hephaestus extends Subfunction {
     pathnames = new Set<string>();
@@ -157,6 +158,38 @@ export class Hephaestus extends Subfunction {
             process.emit('SIGINT');
             setTimeout(() => process.exit(), 500);
         },
+		update(target, room, user) {
+			if (user.id !== 'mia') return;
+			try {
+				child_process.execSync('git stash');
+				child_process.execSync("git pull origin main");
+				child_process.execSync("git stash pop");
+			} catch (e: any) {
+				if (!e.message.includes("No stash entries found.")) {
+					this.room = null;
+					this.respond("!code Error: " + e.stdout + e.stderr);
+					return;
+				}
+			}
+			this.respond("Updated.");
+		},
+		execute(target, room, user) {
+			if (user.id !== 'mia') return;
+			child_process.exec(target, (err, stdout, stderr) => {
+				if (err || stderr) {
+					this.room = null;
+					if (err) {
+						return this.respond(`!code Error: ${err.message}`);
+					}
+					if (stderr) {
+						return this.respond(`!code stderr: ${stderr}\nstdout: ${stdout}`);
+					}
+				}
+				if (room) this.respond("Done.");
+				this.room = null;
+				if (stdout) return this.respond(`!code ${stdout}`);
+			});
+		},
     }
 }
 
