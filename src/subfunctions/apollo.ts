@@ -38,7 +38,7 @@ export class Apollo extends Subfunction {
         let buf = strings[0];
         let i = 0;
         while (i < args.length) {
-            buf += (args[i] + "").replace(/\n/ig, ' | ');
+            buf += (args[i] + "").trim().replace(/\n/ig, ' | ');
             buf += strings[++i];
         }
         return buf;
