@@ -164,7 +164,8 @@ export class Athena extends Subfunction {
             const keys = ['hourmute', 'roomban', 'mute', 'warn', 'hidetext'];
             const changed = [];
             for (const key of keys) {
-                const res = new RegExp(`${key}=?([a-zA-Z0-9]+)`, 'gi').exec(target)?.[1];
+                const res = new RegExp(`${key}(\\s+)(=|to)?(\\s+)([a-zA-Z0-9]+)`, 'gi').exec(target)?.[4];
+                if (!res) continue;
                 const val = Number(res);
                 if (!val) return this.respond(`Value for key "${key}" must be a number.`);
                 GAIA.config.athena[room.id][key] = val;
