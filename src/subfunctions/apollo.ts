@@ -6,6 +6,7 @@ import * as PS from 'psim.us';
 import * as fs from 'fs';
 
 export class Apollo extends Subfunction {
+    color = '\x1b[34m';
     streams = new Map<string, fs.WriteStream>();
     register(client: PS.Client) {
         try {

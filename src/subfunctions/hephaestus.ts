@@ -12,6 +12,7 @@ import * as util from 'util';
 import * as child_process from 'child_process';
 
 export class Hephaestus extends Subfunction {
+	color = '\x1b[35m';
     pathnames = new Set<string>();
     async register() {
         // attached to GAIA so evals can be done in that context

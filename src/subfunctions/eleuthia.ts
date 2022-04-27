@@ -18,6 +18,7 @@ export abstract class ProcessManagerBase {
 }
 
 export class SpawnProcessManager<I = any, O = any> extends ProcessManagerBase {
+    color = '\x1b[36m';
     processes: (ChildProcessWithoutNullStreams & {load: number})[] = [];
     tasks = new Map<string, ((data: any) => void)>();
     constructor(private args: string[], private parent: Eleuthia) {

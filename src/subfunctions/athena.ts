@@ -3,6 +3,7 @@ import {Subfunction, Commands} from '../subfunction';
 import * as pathModule from 'path';
 
 export class Athena extends Subfunction {
+    color = '\x1b[31m'; 
     readonly SETTINGS = new class {
         readonly ACTION_THRESHOLD = 3;
         readonly THRESHOLDS = {

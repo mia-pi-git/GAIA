@@ -7,6 +7,7 @@ import {Subfunction, CommandHandler} from '../subfunction';
 
 type KeyedCommand = CommandHandler & {subfunction: Subfunction};
 export class Hermes extends Subfunction {
+    color = `\x1b[33m`;
     commandTable: Record<string, KeyedCommand | string> = {};
     register(client: PS.Client) {
         client.on('message', this.handleMessage.bind(this));

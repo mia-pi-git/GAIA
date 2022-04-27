@@ -37,8 +37,10 @@ export abstract class Subfunction {
     log(...args: any[]) {
         console.log(
             `[${new Date().toTimeString().split(' ')[0]}] ` +
-            `[${this.constructor.name.toUpperCase()}]`, ...args
+            `${this.color}[${this.constructor.name.toUpperCase()}]\x1b[0m`, 
+            ...args
         );
     }
+    color = '';
     close() {}
 }

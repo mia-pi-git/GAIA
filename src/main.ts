@@ -40,7 +40,9 @@ export class GAIA {
         fs.writeFileSync('./config.json', JSON.stringify(this.config, null, 2));
     }
     log(...args: any[]) {
-        console.log(`[${new Date().toTimeString().split(' ')[0]}] [GPRIME]`, ...args);
+        console.log(
+            `[${new Date().toTimeString().split(' ')[0]}] ` +
+            `\x1b[32m[GPRIME]\x1b[0m`, ...args);
     }
     send(message: string) {
         this.client.send(message);
