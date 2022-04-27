@@ -4,6 +4,9 @@ import * as pathModule from 'path';
 
 export class Athena extends Subfunction {
     color = '\x1b[31m'; 
+    // todo: maybe store in redis?
+    history = new Map<string, number>();
+    sumHistory = new Map<string, number>();
     readonly SETTINGS = new class {
         readonly ACTION_THRESHOLD = 3;
         readonly THRESHOLDS = {
@@ -20,7 +23,7 @@ export class Athena extends Subfunction {
             let score = 0;
             for (const [key, value] of Object.entries(results)) {
                 if (this.THRESHOLDS[key] >= value) {
-                    score += this.SCORES[key] || this.SCORES.default;
+                    score += (this.SCORES[key] || this.SCORES.default);
                 }
             }
             return score;
@@ -38,18 +41,38 @@ export class Athena extends Subfunction {
     }
     private async handleMessage(message: PS.Message) {
         const room = message.room;
-        if (!room) return;
+        const user = message.from;
+        if (!room || !user) return;
         if (!this.config.athenaRooms?.includes(room.id)) {
             return;
         }
         const results = await this.predict(message.text);
-        if (this.SETTINGS.score(results) >= this.SETTINGS.ACTION_THRESHOLD) {
+        const score = this.SETTINGS.score(results);
+        if (!score) return;
+        let sum = this.sumHistory.get(user.id) || 0;
+        sum += score;
+        if (sum >= this.SETTINGS.ACTION_THRESHOLD) {
+            this.sumHistory.delete(user.id);
             // action
             const apollo = GAIA.subfunctions.get("APOLLO");
             apollo.write(
                 "athena", 
                 apollo.strip`${message.from}: ${message.text}: ${JSON.stringify(results)}`
             );
+            let cmd;
+            let history = this.history.get(user.id) || 0;
+            history++;
+            if (history > 4) {
+                cmd = 'hourmute';
+            } else if (history > 2) {
+                cmd = 'mute';
+            } else if (history) {
+                cmd = 'warn';
+            }
+            room.send(`/${cmd} ${user.name},Automated moderation: Misbehavior detected.`);
+            this.history.set(user.id, history);
+        } else {
+            this.sumHistory.set(user.id, sum);
         }
     }
     close() {}
