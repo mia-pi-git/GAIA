@@ -112,6 +112,7 @@ export class Athena extends Subfunction {
                 }
                 GAIA.config.athena[room.id] = {};
                 GAIA.saveConfig();
+                room.send(`/modnote ${user.name} enabled ATHENA moderation in this room.`);
                 return this.respond("Moderation enabled.");
             } else if (target === 'off') {
                 if (!saved) {
@@ -119,6 +120,7 @@ export class Athena extends Subfunction {
                 }
                 delete GAIA.config.athena[room.id];
                 GAIA.saveConfig();
+                room.send(`/modnote ${user.name} disabled ATHENA moderation in this room.`);
                 return this.respond("Moderation disabled.");
             } else {
                 return this.respond("Invalid setting - must be 'on' or 'off'.");
@@ -166,14 +168,14 @@ export class Athena extends Subfunction {
                 const val = Number(res);
                 if (!val) return this.respond(`Value for key "${key}" must be a number.`);
                 GAIA.config.athena[room.id][key] = val;
-                changed.push(key);
+                changed.push([key, val]);
             }
             if (!changed.length) {
                 return this.respond("No values changed.");
             }
             room.send(
-                `/modnote ${user.name} updated the ATHENA config for this room ` +
-                `- ${changed.map(k => `${k}: ${GAIA.config.athena[room!.id][k]}`)}`
+                `/modnote ${user.name} updated the ATHENA config for this room: set ` +
+                `${changed.map(([k, v]) => `${k} to ${v}`).join(', ')}`
             );
             GAIA.saveConfig();
         },
