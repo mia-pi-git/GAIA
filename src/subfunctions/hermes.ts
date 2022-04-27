@@ -65,11 +65,11 @@ export class Hermes extends Subfunction {
         while (typeof this.commandTable[command] === 'string') {
             command = this.commandTable[command] as string;
         }
-        const target = args.join(' ');
         if (!(command in this.commandTable)) {
             if (!message.room) return message.respond("Command not found.");
             return;
         }
+        const target = args.join(' ');
         try {
             const handler = this.commandTable[command] as KeyedCommand;
             await handler.call(
@@ -93,39 +93,40 @@ export class Hermes extends Subfunction {
             if (!target) {
                 return this.respond("No room specified.");
             }
-            const roomId = GAIA.toID(target);
+            const roomId = GAIA.toRoomID(target);
             const found = await this.client.rooms.get(roomId);
             if (!found) {
                 return this.respond(`Room '${roomId}' not found or is inaccessible.`);
             }
-            const data = await this.client.query('userdetails', GAIA.config.name) || {};
-            if (Object.keys(data.rooms).filter(f => GAIA.toID(f) === roomId)) {
+            const data = await this.client.query('userdetails', [GAIA.config.name]) || {};
+            if (Object.keys(data.rooms).filter(f => GAIA.toRoomID(f) === roomId)) {
                 return this.respond("Room already joined.");
             }
             GAIA.config.rooms.push(found.id);
             GAIA.saveConfig();
             this.client.send(`|/join ${roomId}`);
         },
-        async leave(target, room, user) {
+        async leave(target, room, user, sf) {
             if (room && !target) {
                 target = room.id;
             }
             this.room = null;
-            if (!this.isRank('#')) {
+            if (!this.isRank('@')) {
                 if (!room) return this.respond("Access denied.");
                 return;
             }
             if (!target) {
                 return this.respond("No room specified.");
             }
-            const roomId = GAIA.toID(target);
-            const data = await this.client.query('userdetails', GAIA.config.name) || {};
-            if (!Object.keys(data.rooms).filter(f => GAIA.toID(f) === roomId)) {
+            const roomId = GAIA.toRoomID(target);
+            const data = await this.client.query('userdetails', [GAIA.config.name]) || {};
+            if (!Object.keys(data.rooms).filter(f => GAIA.toRoomID(f) === roomId)) {
                 return this.respond("Room not joined.");
             }
             GAIA.config.rooms.splice(GAIA.config.rooms.indexOf(roomId), 1);
             GAIA.saveConfig();
             GAIA.client.send(`${roomId}|/leave`);
+            this.room = null;
         },
     };
 }
