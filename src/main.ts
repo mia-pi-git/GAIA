@@ -27,7 +27,7 @@ export class GAIA {
 
         for (const [name, sub] of loaded) {
             await sub.register(this.client);
-            this.log(`${name} loaded.`);
+            this.log(`${sub.color}${name}\x1b[0m loaded.`);
         }
         this.log("GAIA intialization complete. All subfunctions registered.");
         this.log("Connecting now.");
