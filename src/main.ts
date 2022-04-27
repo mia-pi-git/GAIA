@@ -42,9 +42,28 @@ export class GAIA {
             }
         });
     }
-    toID(text: any): string {
-        return (text && typeof text === "string" ? text : "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+    toRoomID(text: any) {
+        if (typeof text !== 'string' && typeof text !== 'number') return '';
+        return ('' + text)
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '') as string;
     }
+   
+    toID(text: any) {
+        if (text && text.id) {
+            text = text.id;
+        } else if (text && text.userid) {
+            text = text.userid;
+        } else if (text && text.roomid) {
+            text = text.roomid;
+        }
+        if (typeof text !== 'string' && typeof text !== 'number') return '';
+        return ('' + text)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '') as string;
+    }
+
     saveConfig() {
         fs.writeFileSync('./config.json', JSON.stringify(this.config, null, 2));
     }
