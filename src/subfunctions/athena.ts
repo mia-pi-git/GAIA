@@ -189,6 +189,7 @@ process.on('uncaughtException', (err: any) => {
         // does... so i'm suppressing it
         return;
     }
+    if (err.message.includes("Request timeout")) return;
     GAIA.log(err);
 });
 
