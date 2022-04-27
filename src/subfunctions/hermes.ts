@@ -24,6 +24,17 @@ export class Hermes extends Subfunction {
             this.config.prefix = [this.config.prefix];
             GAIA.saveConfig();
         }
+        if (message.text.startsWith('/invite ')) {
+            if (message.isRank('%')) {
+                const room = message.text.slice('/invite '.length);
+                if (!GAIA.config.rooms.includes(room)) {
+                    GAIA.log(`Invited to ${room} by ${message.from}`);
+                    GAIA.config.rooms.push(room);
+                    GAIA.saveConfig();
+                    GAIA.client.send(`|/join ${room}`);
+                }
+            }
+        }
         const prefix = this.config.prefix
             .filter((f: string) => message.text.startsWith(f))[0];
         if (!prefix || !message.from) {
