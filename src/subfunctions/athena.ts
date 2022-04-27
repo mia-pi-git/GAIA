@@ -51,7 +51,8 @@ export class Athena extends Subfunction {
         const room = message.room;
         const user = message.from;
         if (!room || !user) return;
-        if (!this.config.athena[room.id]) {
+        const config = GAIA.config.athena[room.id];
+        if (!config) {
             return;
         }
         const results = await this.predict(message.text);
@@ -70,14 +71,17 @@ export class Athena extends Subfunction {
             let cmd;
             let history = this.history.get(user.id) || 0;
             history++;
-            if (history > 4) {
+            if (history >= (config.roomban || 6)) {
+                cmd = 'roomban';
+            } else if (history >= (config.hourmute || 4)) {
                 cmd = 'hourmute';
-            } else if (history > 2) {
+            } else if (history >= (config.mute || 2)) {
                 cmd = 'mute';
-            } else if (history) {
+            } else if (history >= (config.warn || 1)) {
                 cmd = 'warn';
-            }
-            room.send(`/${cmd} ${user.name},Automated moderation: Misbehavior detected.`);
+            } 
+            if (cmd) room.send(`/${cmd} ${user.name},Automated moderation (misbehavior detected)`);
+            room.send(`/cleartext ${user.name},Automated moderation (misbehavior detected)`);
             this.history.set(user.id, history);
         } else {
             this.sumHistory.set(user.id, sum);
@@ -135,6 +139,43 @@ export class Athena extends Subfunction {
                 .map(([key, value]) => `${key}: ${value}`)
                 .join('\n');
             this.respond(`!code ${buf}`);
+        },
+        'configure ATHENA with settings': 'aconfig',
+        async aconfig(target, room, user, sf, cmd) {
+            let maybeRoom = GAIA.toID(/room=?([a-zA-Z0-9-]+)/.exec(target)?.[1]);
+            if (maybeRoom) {
+                const roomObj = await this.client.rooms.get(maybeRoom);
+                if (!roomObj) {
+                    return this.respond("Invalid room: " + maybeRoom);
+                }
+                room = this.room = roomObj;
+            }
+            if (!room) {
+                return this.respond("You must specify a room or use this command in a room.");
+            }
+            if (!this.isRank('@')) {
+                return this.respond("Access denied.");
+            }
+            if (!GAIA.config.athena?.[room.id]) {
+                return this.respond("ATHENA is not enabled in the given room.");
+            }
+            const keys = ['hourmute', 'roomban', 'mute', 'warn', 'hidetext'];
+            const changed = [];
+            for (const key of keys) {
+                const res = new RegExp(`${key}=?([a-zA-Z0-9]+)`, 'gi').exec(target)?.[1];
+                const val = Number(res);
+                if (!val) return this.respond(`Value for key "${key}" must be a number.`);
+                GAIA.config.athena[room.id][key] = val;
+                changed.push(key);
+            }
+            if (!changed.length) {
+                return this.respond("No values changed.");
+            }
+            room.send(
+                `/modnote ${user.name} updated the ATHENA config for this room ` +
+                `- ${changed.map(k => `${k}: ${GAIA.config.athena[room!.id][k]}`)}`
+            );
+            GAIA.saveConfig();
         },
     };
 }
