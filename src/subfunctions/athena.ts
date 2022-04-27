@@ -31,6 +31,14 @@ export class Athena extends Subfunction {
     };
     private handler!: import('./eleuthia').SpawnProcessManager;
     async register(client: PS.Client) {
+        if (GAIA.config.athenaRooms) {
+            GAIA.config.athena = {};
+            for (const room of GAIA.config.athenaRooms) {
+                GAIA.config.athena[room] = {};
+            }
+            delete GAIA.config.athenaRooms;
+            GAIA.saveConfig();
+        }
         this.handler = GAIA.subfunctions.get("ELEUTHIA").spawn(
             "Spawn", ['python3', '-u', pathModule.resolve(__dirname, '..', '..', 'src/lib/model.py')]
         );
@@ -43,7 +51,7 @@ export class Athena extends Subfunction {
         const room = message.room;
         const user = message.from;
         if (!room || !user) return;
-        if (!this.config.athenaRooms?.includes(room.id)) {
+        if (!this.config.athena[room.id]) {
             return;
         }
         const results = await this.predict(message.text);
@@ -93,19 +101,19 @@ export class Athena extends Subfunction {
             if (!this.isRank("#")) {
                 return this.respond("Access denied.");
             }
-            const savedIdx = subfunction.config.athenaRooms.indexOf(room.id);
+            const saved = subfunction.config.athena[room.id];
             if (target === 'on') {
-                if (savedIdx > -1) {
+                if (saved) {
                     return this.respond("Moderation already enabled.");
                 }
-                GAIA.config.athenaRooms.push(room.id);
+                GAIA.config.athena[room.id] = {};
                 GAIA.saveConfig();
                 return this.respond("Moderation enabled.");
             } else if (target === 'off') {
-                if (savedIdx === -1) {
+                if (!saved) {
                     return this.respond("Moderation already disabled.");
                 }
-                GAIA.config.athenaRooms.splice(savedIdx, 1);
+                delete GAIA.config.athena[room.id];
                 GAIA.saveConfig();
                 return this.respond("Moderation disabled.");
             } else {
