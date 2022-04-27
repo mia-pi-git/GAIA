@@ -16,6 +16,8 @@ interface TrackerConfig {
     rating?: number;
     deadline?: string;
     cutoff?: number;
+    users?: string[];
+    showdiffs?: boolean;
 }
 
 interface Battle {
@@ -42,24 +44,24 @@ interface LeaderboardEntry {
 type ID = string;
 
 class LadderTracker {
-    private readonly config: TrackerConfig;
+    readonly config: TrackerConfig;
 
     private format: ID;
     private prefix: ID;
     private deadline?: Date;
-    private rating: number;
-    private users: Set<ID>;
+    rating: number;
+    users: Set<ID>;
   
     private lastid?: string;
-    private showdiffs?: boolean;
+    showdiffs?: boolean;
     private started?: NodeJS.Timeout;
     private final?: NodeJS.Timeout;
   
-    private leaderboard: Leaderboard;
+    leaderboard: Leaderboard;
   
-    private cooldown?: Date;
+    cooldown?: Date;
     private changed?: boolean;
-    private lines: { them: number; total: number };
+    lines: { them: number; total: number };
   
     constructor(public room: PS.Room, private parent: Nike, config: TrackerConfig) {
         this.config = config;
@@ -69,9 +71,9 @@ class LadderTracker {
         this.rating = config.rating || 0;
         if (config.deadline) this.setDeadline(config.deadline);
     
-        this.users = new Set();
+        this.users = new Set(config.users);
         this.leaderboard = {lookup: new Map()};
-        this.showdiffs = false;
+        this.showdiffs = config.showdiffs || false;
     
         this.lines = {them: 0, total: 0};
     }
@@ -247,6 +249,17 @@ class LadderTracker {
     log(...args: any[]) {
         this.parent.log(...args);
     }
+    
+    saveData() {
+        this.parent.saveData();
+    }
+
+    restoreConfig() {
+        this.config.users = [...this.users];
+        this.config.showdiffs = this.showdiffs;
+        this.config.rating = this.rating;
+        this.config.deadline = this.deadline?.toString();
+    }
   
     styleLeaderboard(leaderboard: LeaderboardEntry[], final?: number) {
         const diffs =
@@ -391,6 +404,15 @@ export class Nike extends Subfunction {
             const data = JSON.parse(args.slice(1).join('|'));
             this.handleRoomsData(data);
         });
+        client.on('message', message => {
+            if (!message.room) return;
+            const tracker = this.trackers.get(message.room.id);
+            if (!tracker) return;
+            tracker.lines.total++;
+            if (message.user.id !== GAIA.toID(GAIA.config.name)) {
+                tracker.lines.them++;
+            }
+        });
         if (!this.config.rooms) return;
         for (const roomId in this.config.rooms) {
             const room = await GAIA.client.rooms.get(roomId);
@@ -401,12 +423,21 @@ export class Nike extends Subfunction {
         }
     }
     saveData() {
+        for (const tracker of this.trackers.values()) tracker.restoreConfig();
         return fs.writeFileSync(`${__dirname}/../../data/nike.json`, JSON.stringify(this.config));
     }
     handleRoomsData(data: any) {
         for (const tracker of this.trackers.values()) {
             tracker.onQueryresponse(data);
         }
+    }
+    static getTracker(message: PS.Message, rank = '+') {
+        if (!message.isRank(rank)) return;
+        if (!message.room) return message.respond("This command must be used in a room.");
+        const nike = GAIA.subfunctions.get("NIKE");
+        const tracker = nike.trackers.get(message.room.id);
+        if (!tracker) return message.respond("NIKE has no tracker for this room.");
+        return tracker;
     }
     commands: Commands = {
         'override NIKE tracking for': 'set NIKE to track',
@@ -517,6 +548,108 @@ export class Nike extends Subfunction {
             nike.trackers.set(room.id, tracker);
             this.room = room;
             this.respond("NIKE tracking started.");
+        },
+        top: 'leaderboard',
+        leaderboard(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this);
+            if (!tracker) return;
+            const now = new Date();
+            if (tracker.leaderboardCooldown(now)) {
+                tracker.cooldown = now;
+                void tracker.getLeaderboard(true);
+            } else {
+                return this.respond(`\`\`\`${cmd}\`\`\` has been used too recently, please try again later.`);
+            }
+        },
+        remaining: 'deadline',
+        deadline(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this);
+            if (!tracker) return;
+            if (target) {
+                if (!this.isRank('%')) {
+                    return this.respond('Access denied.');
+                }
+                if (!+new Date(target)) {
+                    return this.respond('Invalid date.');
+                }
+                tracker.setDeadline(target);
+            }
+            tracker.getDeadline(new Date());
+            tracker.saveData();
+        },
+        elo: 'rating',
+        rating(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this);
+            if (!tracker) return;
+            const rating = Number(target);
+            if (target) {
+                if (!rating) return this.respond("Invalid rating.");
+                if (!this.isRank('%')) return this.respond('Access denied.');
+                if (rating < 1000) return this.respond("Invalid rating. Must be a number above 1000.");
+                tracker.rating = rating;
+                tracker.config.rating = rating;
+                tracker.saveData();
+            }
+            this.respond(`**Rating:** ${tracker.rating}`);
+        },
+        add: 'watch',
+        track: 'watch',
+        follow: 'watch',
+        watch(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            for (const userid of target.split(',').map(GAIA.toID)) {
+                if (userid) {
+                    tracker.users.add(userid);
+                }
+            }
+            tracker.tracked();
+            tracker.saveData();
+        },
+        untrack: 'unwatch',
+        unfollow: 'unwatch',
+        remove: 'unwatch',
+        unwatch(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            for (const userid of target.split(',').map(GAIA.toID)) {
+                if (userid) {
+                    tracker.users.delete(userid);
+                }
+            }
+            tracker.tracked();
+            tracker.saveData();
+        },
+        tracked: 'tracking',
+        watched: 'tracking',
+        followed: 'tracking',
+        watching: 'tracking',
+        tracking(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            tracker.tracked();
+        },
+        start(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            tracker.start();
+        },
+        stop(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            tracker.stop();
+        },
+        hidediffs: 'showdiffs',
+        showdiffs(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            const setting = !cmd.includes('hide');
+            if (tracker.showdiffs === setting) {
+                return this.respond(`Differences are already ${setting ? 'shown' : 'hidden'}.`);
+            }
+            tracker.showdiffs = setting;
+            this.respond(`Showdiffs is now ${setting ? 'on' : 'off'}.`);
+            tracker.saveData();
         },
     }
 }
