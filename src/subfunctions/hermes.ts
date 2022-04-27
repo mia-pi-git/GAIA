@@ -87,14 +87,15 @@ export class Hermes extends Subfunction {
             if (!found) {
                 return this.respond(`Room '${roomId}' not found or is inaccessible.`);
             }
-            if (subfunction.config.rooms.includes(found.id)) {
+            const data = await this.client.query('userdetails', GAIA.config.name) || {};
+            if (Object.keys(data.rooms).filter(f => GAIA.toID(f) === roomId)) {
                 return this.respond("Room already joined.");
             }
             GAIA.config.rooms.push(found.id);
             GAIA.saveConfig();
             this.client.send(`|/join ${roomId}`);
         },
-        leave(target, room, user) {
+        async leave(target, room, user) {
             if (room && !target) {
                 target = room.id;
             }
@@ -107,7 +108,8 @@ export class Hermes extends Subfunction {
                 return this.respond("No room specified.");
             }
             const roomId = GAIA.toID(target);
-            if (!GAIA.config.rooms.includes(roomId)) {
+            const data = await this.client.query('userdetails', GAIA.config.name) || {};
+            if (!Object.keys(data.rooms).filter(f => GAIA.toID(f) === roomId)) {
                 return this.respond("Room not joined.");
             }
             GAIA.config.rooms.splice(GAIA.config.rooms.indexOf(roomId), 1);

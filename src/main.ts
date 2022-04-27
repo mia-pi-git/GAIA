@@ -7,7 +7,10 @@ import {SubfunctionTable, Subfunction} from './subfunction';
 
 export class GAIA {
     subfunctions = new SubfunctionTable();
-    constructor(public client: PS.Client, public config: any) {}
+    user!: PS.User;
+    constructor(public client: PS.Client, public config: any) {
+        this.user = new PS.User(client);
+    }
     async load() {
         this.log("Beginning GAIA intialization.");
         const files = fs.readdirSync(__dirname + "/subfunctions");
@@ -32,6 +35,12 @@ export class GAIA {
         this.log("GAIA intialization complete. All subfunctions registered.");
         this.log("Connecting now.");
         this.client.connect();
+        this.client.on('ready', async () => {
+            const user = await this.client.users.get(this.config.name);
+            if (user) {
+                this.user = user;
+            }
+        });
     }
     toID(text: any): string {
         return (text && typeof text === "string" ? text : "").toLowerCase().replace(/[^a-z0-9]+/g, "");
