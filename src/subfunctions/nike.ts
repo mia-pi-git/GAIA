@@ -582,7 +582,6 @@ export class Nike extends Subfunction {
             nike.saveData();
             const tracker = new LadderTracker(room, nike, config as TrackerConfig);
             tracker.start();
-            sf.log(room.id, config, target);
             nike.trackers.set(room.id, tracker);
             this.room = room;
             this.respond("NIKE tracking started.");
