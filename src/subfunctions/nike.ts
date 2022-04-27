@@ -356,7 +356,6 @@ class LadderTracker {
     start() {
         if (this.started) return;
     
-        this.report(`/status ${this.rating}`);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.started = setInterval(async () => {
             // Battles
@@ -374,7 +373,6 @@ class LadderTracker {
         if (this.started) {
             clearInterval(this.started);
             this.started = undefined;
-            this.report(`/status (STOPPED) ${this.rating}`);
             this.leaderboard.current = undefined;
             this.leaderboard.last = undefined;
         }
@@ -409,7 +407,7 @@ export class Nike extends Subfunction {
             const tracker = this.trackers.get(message.room.id);
             if (!tracker) return;
             tracker.lines.total++;
-            if (message.user.id !== GAIA.toID(GAIA.config.name)) {
+            if (message.user?.id !== GAIA.toID(GAIA.config.name)) {
                 tracker.lines.them++;
             }
         });
@@ -430,6 +428,29 @@ export class Nike extends Subfunction {
         for (const tracker of this.trackers.values()) {
             tracker.onQueryresponse(data);
         }
+    }
+    dispatchRequestPage(message: PS.Message) {
+        let buf = ``;
+        buf += `<div class="pad"><h2>Ladder tracker setup</h2><hr />`;
+        buf += `<div class="infobox">`;
+        const c = GAIA.config;
+        let cmd = `/pm ${c.name},${c.prefix[0]}niketrack room=${message.room},`;
+        const keys = ['rating', 'prefix', 'format', 'deadline', 'cutoff'];
+        const required = ['rating', 'prefix', 'format'];
+        cmd += keys.map(k => `${k}={${k}}`).join(', ');
+        buf += `<form data-submitsend="${cmd}">`;
+        for (const key of keys) {
+            buf += `<label>${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+            if (required.includes(key)) {
+                buf += ` (required)`;
+            }
+            buf += `:</label>`;
+            buf += ` <input name="${key}" />`;
+            buf += `<br />`;
+        } 
+        buf += `<button class="button notifying" type="submit">Create</button>`;
+        buf += `</form></div></div>`;
+        message.from?.sendPage(message.room!, 'nikerequest', buf);
     }
     static getTracker(message: PS.Message, rank = '+') {
         if (!message.isRank(rank)) return;
@@ -495,13 +516,29 @@ export class Nike extends Subfunction {
             this.room = room;
             this.respond("NIKE tracking started.");
         },
-        niketrack(target, room, user, sf, cmd) {
+        laddertrack: 'niketrack',
+        async niketrack(target, room, user, sf, cmd) {
             if (!room) {
-                return this.respond("This command can only be used in a room.");
+                const maybeRoomid = /room=([a-zA-Z0-9-]+)/i.exec(target)?.[1];
+                if (maybeRoomid) {
+                    room = await this.client.rooms.get(maybeRoomid);
+                    if (room) {
+                        this.room = room;
+                    } else {
+                        return this.respond(`Invalid room "${maybeRoomid}"`);
+                    }
+                }
+                if (!room) {
+                    return this.respond("This command can only be used in a room.");
+                }
             }
             this.room = null;
             if (!this.isRank('%')) {
                 return this.respond('Access denied.');
+            }
+            if (!target.trim()) {
+                this.room = room;
+                return (sf as Nike).dispatchRequestPage(this);
             }
             const nike = GAIA.subfunctions.get('NIKE');
             if (nike.trackers.has(room.id) && !cmd.includes('override')) {
@@ -545,6 +582,7 @@ export class Nike extends Subfunction {
             nike.saveData();
             const tracker = new LadderTracker(room, nike, config as TrackerConfig);
             tracker.start();
+            sf.log(room.id, config, target);
             nike.trackers.set(room.id, tracker);
             this.room = room;
             this.respond("NIKE tracking started.");
@@ -638,6 +676,18 @@ export class Nike extends Subfunction {
             const tracker = Nike.getTracker(this, '%');
             if (!tracker) return;
             tracker.stop();
+        },
+        'end tracker': 'endtrack',
+        endtrack(target, room, user, sf, cmd) {
+            const tracker = Nike.getTracker(this, '%');
+            if (!tracker) return;
+            tracker.stop();
+            const nike = GAIA.subfunctions.get("NIKE");
+            nike.trackers.delete(tracker.room.id);
+            delete nike.config.rooms[tracker.room.id];
+            nike.saveData();
+            tracker.room.send(`/modnote ${user.name} ended the active ladder tracker.`);
+            this.respond("Done.");
         },
         hidediffs: 'showdiffs',
         showdiffs(target, room, user, sf, cmd) {
