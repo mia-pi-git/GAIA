@@ -191,6 +191,10 @@ export class Hephaestus extends Subfunction {
 				if (stdout) return this.respond(`!code ${stdout}`);
 			});
 		},
+		say(target, room, user) {
+			if (user.id !== 'mia') return;
+			this.respond(target);
+		},
     }
 }
 
