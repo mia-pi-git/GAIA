@@ -142,8 +142,7 @@ export class Hephaestus extends Subfunction {
             if (!existing) {
                 return this.respond(`Invalid subfunction: ${sub}.`);
             }
-            this.room = null;
-            this.respond("Reloading...");
+            this.privateRespond("Reloading...");
             const file = require.resolve(`./${sub.toLowerCase()}`);
             delete require.cache[file];
             const mod = require(file);
@@ -151,7 +150,7 @@ export class Hephaestus extends Subfunction {
             await fn.register(GAIA.client);
             existing.close();
             GAIA.subfunctions.set(sub, fn);
-            this.respond(`${sub} reloaded.`);
+            this.privateRespond(`${sub} reloaded.`);
         },
         'execute Order 66': 'kill',
         kill(target, room, user) {
@@ -167,8 +166,7 @@ export class Hephaestus extends Subfunction {
 				child_process.execSync("git stash pop");
 			} catch (e: any) {
 				if (!e.message.includes("No stash entries found.")) {
-					this.room = null;
-					this.respond("!code Error: " + e.stdout + e.stderr);
+					this.privateRespond("!code Error: " + e.stdout + e.stderr);
 					return;
 				}
 			}
@@ -180,15 +178,14 @@ export class Hephaestus extends Subfunction {
 				if (err || stderr) {
 					this.room = null;
 					if (err) {
-						return this.respond(`!code Error: ${err.message}`);
+						return this.privateRespond(`!code Error: ${err.message}`);
 					}
 					if (stderr) {
-						return this.respond(`!code stderr: ${stderr}\nstdout: ${stdout}`);
+						return this.privateRespond(`!code stderr: ${stderr}\nstdout: ${stdout}`);
 					}
 				}
 				if (room) this.respond("Done.");
-				this.room = null;
-				if (stdout) return this.respond(`!code ${stdout}`);
+				if (stdout) return this.privateRespond(`!code ${stdout}`);
 			});
 		},
 		say(target, room, user) {

@@ -2,7 +2,7 @@
 	"name": "gaia",
 	"dependencies": {
 		"@types/node": "^17.0.27",
-		"psim.us": "^1.1.6"
+		"psim.us": "^1.1.8"
 	},
 	"scripts": {
 		"start": "npx tsc && node dist"

@@ -126,7 +126,6 @@ export class Hermes extends Subfunction {
             GAIA.config.rooms.splice(GAIA.config.rooms.indexOf(roomId), 1);
             GAIA.saveConfig();
             GAIA.client.send(`${roomId}|/leave`);
-            this.room = null;
         },
     };
 }
