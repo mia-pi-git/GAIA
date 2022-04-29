@@ -7,7 +7,7 @@ import {Subfunction, Commands} from '../subfunction';
 import * as fs from 'fs';
 
 const MINUTE = 60000;
-const INTERVAL = 1000;
+const INTERVAL = 5 * MINUTE;
 const FACTOR = 1.5;
 
 interface TrackerConfig {
