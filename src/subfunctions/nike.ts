@@ -5,6 +5,7 @@
 import * as PS from 'psim.us';
 import {Subfunction, Commands} from '../subfunction';
 import * as fs from 'fs';
+import {parseDate} from 'chrono-node';
 
 const MINUTE = 60000;
 const INTERVAL = 5 * MINUTE;
@@ -492,9 +493,13 @@ export class Nike extends Subfunction {
             if (cutoff) {
                 config.cutoff = cutoff;
             }
-            let deadline = /the deadline ([a-zA-Z0-9-\s:]+)/i.exec(target)?.[1];
-            if (deadline && +new Date(deadline)) {
-                config.deadline = new Date(deadline).toString();
+            let deadline = /the deadline ([^,]+)/i.exec(target)?.[1];
+            if (deadline) {
+                const date = parseDate(deadline);
+                if (!+date) {
+                    return this.respond("Invalid date.");
+                }
+                config.deadline = date.toString();
             }
             const format = GAIA.toID(/format ([a-zA-Z0-9]+)/i.exec(target)?.[1]);
             if (!format) {
@@ -515,6 +520,10 @@ export class Nike extends Subfunction {
             nike.trackers.set(room.id, tracker);
             this.room = room;
             this.respond("NIKE tracking started.");
+            this.room.send(
+                `/modnote ladder track started by ${user.id} ` +
+                `(${Object.entries(config).map(([k, v]) => `${k}=${v}`)})`
+            );
         },
         laddertrack: 'niketrack',
         async niketrack(target, room, user, sf, cmd) {
@@ -524,6 +533,7 @@ export class Nike extends Subfunction {
                     room = await this.client.rooms.get(maybeRoomid);
                     if (room) {
                         this.room = room;
+                        target = target.replace(/room=([a-zA-Z0-9-]+)/i, '').trim();
                     } else {
                         return this.respond(`Invalid room "${maybeRoomid}"`);
                     }
@@ -562,16 +572,20 @@ export class Nike extends Subfunction {
             if (cutoff) {
                 config.cutoff = cutoff;
             }
-            let deadline = /deadline=([a-zA-Z0-9-\s:]+)/i.exec(target)?.[1];
-            if (deadline && +new Date(deadline)) {
-                config.deadline = new Date(deadline).toString();
+            let deadline = /deadline=([^,]+)(and)?/i.exec(target)?.[1];
+            if (deadline) {
+                const date = parseDate(deadline);
+                if (!+date) {
+                    return this.respond("Invalid date.");
+                }
+                config.deadline = date.toString();
             }
-            const format = GAIA.toID(/format=([a-zA-Z0-9]+)/i.exec(target)?.[1]);
+            const format = GAIA.toID(/format=([^,]+)(and)?/i.exec(target)?.[1]);
             if (!format) {
                 return this.respond("You must specify a format.");
             }
             config.format = format;
-            const prefix = GAIA.toID(/prefix=([a-zA-Z0-9]+)/i.exec(target)?.[1]);
+            const prefix = GAIA.toID(/prefix=([^,]+)(and)?/i.exec(target)?.[1]);
             if (!prefix) {
                 return this.respond("You must specify a prefix.");
             }
@@ -584,7 +598,11 @@ export class Nike extends Subfunction {
             tracker.start();
             nike.trackers.set(room.id, tracker);
             this.room = room;
-            this.respond("NIKE tracking started.");
+            this.respond(`ladder tracking started for ${config.format}.`);
+            this.room.send(
+                `/modnote ladder track started by ${user.id} ` +
+                `(${Object.entries(config).map(([k, v]) => `${k}=${v}`)})`
+            );
         },
         top: 'leaderboard',
         leaderboard(target, room, user, sf, cmd) {
@@ -606,8 +624,9 @@ export class Nike extends Subfunction {
                 if (!this.isRank('%')) {
                     return this.respond('Access denied.');
                 }
-                if (!+new Date(target)) {
-                    return this.respond('Invalid date.');
+                const date = parseDate(target);
+                if (!+date) {
+                    return this.respond("Invalid date.");
                 }
                 tracker.setDeadline(target);
             }
