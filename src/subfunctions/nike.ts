@@ -19,6 +19,8 @@ interface TrackerConfig {
     cutoff?: number;
     users?: string[];
     showdiffs?: boolean;
+    // todo? idk
+    cmdToken?: string;
 }
 
 interface Battle {
@@ -719,6 +721,25 @@ export class Nike extends Subfunction {
             this.respond(`Showdiffs is now ${setting ? 'on' : 'off'}.`);
             tracker.saveData();
         },
+        nikehelp: 'ladderhelp',
+        ladderhelp() {
+            this.respond([
+                `!code **Ladder Tracker Commands**`,
+                `- laddertrack (optional key=value formatted args: rating, prefix, format, deadline, cutoff) - starts a ladder tracker` + 
+                    `, or displays a page to start a tracker (requires % in the room to do so).`,
+                ` - leaderboard - updates and displays the current leaderboard`,
+                ` - deadline [optional date] - displays the current deadline, or sets the deadline to the given deadline if one is given (requires % to do so)`,
+                ` - rating [optional rating] - displays the current rating, or sets the rating to the given rating if one is given (requires % to do so)`,
+                ` - watch [optional user] - tracks the given user's battles (requires % to do so)`,
+                ` - unwatch [optional user] - stops tracking the given user's battles (requires % to do so)`,
+                ` - tracking - displays the current users being tracked`,
+                ` - start - starts the tracker`,
+                ` - stop - stops (pauses) the tracker`,
+                ` - endtracker - ends the tracker entirely`,
+                ` - showdiffs - shows or hides differences between the current leaderboard and the previous leaderboard`,
+                ` - ladderhelp - displays this message`,
+            ].join('\n'));
+        }
     }
 }
 
