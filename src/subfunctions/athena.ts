@@ -51,7 +51,7 @@ export class Athena extends Subfunction {
         const room = message.room;
         const user = message.from;
         if (!room || !user) return;
-        const config = GAIA.config.athena[room.id];
+        const config = GAIA.config.athena?.[room.id];
         if (!config) {
             return;
         }
