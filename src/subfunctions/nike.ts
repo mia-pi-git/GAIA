@@ -725,8 +725,8 @@ export class Nike extends Subfunction {
         ladderhelp() {
             this.respond([
                 `!code **Ladder Tracker Commands**`,
-                `- laddertrack (optional key=value formatted args: rating, prefix, format, deadline, cutoff) - starts a ladder tracker` + 
-                    `, or displays a page to start a tracker (requires % in the room to do so).`,
+                `- laddertrack displays a page to start a tracker (requires % in the room to do so).`,
+                // ` (can also be used with key=value formatted args to start it directly - requires keys: rating, prefix, format, deadline, cutoff)`,
                 ` - leaderboard - updates and displays the current leaderboard`,
                 ` - deadline [optional date] - displays the current deadline, or sets the deadline to the given deadline if one is given (requires % to do so)`,
                 ` - rating [optional rating] - displays the current rating, or sets the rating to the given rating if one is given (requires % to do so)`,
