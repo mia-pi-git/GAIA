@@ -3,6 +3,7 @@
 	"dependencies": {
 		"@types/node": "^17.0.27",
 		"chrono-node": "^2.3.8",
+		"node-gpt": "^0.2.0-alpha",
 		"psim.us": "^1.1.8"
 	},
 	"scripts": {

@@ -463,9 +463,9 @@ export class Nike extends Subfunction {
         if (!tracker) return message.respond("NIKE has no tracker for this room.");
         return tracker;
     }
-    commands: Commands = {
+    commands: Commands<Nike> = {
         'override NIKE tracking for': 'set NIKE to track',
-        'set NIKE to track'(target, room, user, sf, cmd) {
+        'set NIKE to track'(target, room, user, nike, cmd) {
             if (!room) {
                 return this.respond("This command can only be used in a room.");
             }
@@ -473,7 +473,6 @@ export class Nike extends Subfunction {
             if (!this.isRank('%')) {
                 return this.respond('Access denied.');
             }
-            const nike = GAIA.subfunctions.get('NIKE');
             if (nike.trackers.has(room.id) && !cmd.includes('override')) {
                 return this.respond(
                     "NIKE already has a tracker running for that room. " +
@@ -528,7 +527,7 @@ export class Nike extends Subfunction {
             );
         },
         laddertrack: 'niketrack',
-        async niketrack(target, room, user, sf, cmd) {
+        async niketrack(target, room, user, nike, cmd) {
             if (!room) {
                 const maybeRoomid = /room=([a-zA-Z0-9-]+)/i.exec(target)?.[1];
                 if (maybeRoomid) {
@@ -550,9 +549,8 @@ export class Nike extends Subfunction {
             }
             if (!target.trim()) {
                 this.room = room;
-                return (sf as Nike).dispatchRequestPage(this);
+                return nike.dispatchRequestPage(this);
             }
-            const nike = GAIA.subfunctions.get('NIKE');
             if (nike.trackers.has(room.id) && !cmd.includes('override')) {
                 return this.respond(
                     "NIKE already has a tracker running for that room. " +
@@ -698,11 +696,10 @@ export class Nike extends Subfunction {
             tracker.stop();
         },
         'end tracker': 'endtrack',
-        endtrack(target, room, user, sf, cmd) {
+        endtrack(target, room, user, nike, cmd) {
             const tracker = Nike.getTracker(this, '%');
             if (!tracker) return;
             tracker.stop();
-            const nike = GAIA.subfunctions.get("NIKE");
             nike.trackers.delete(tracker.room.id);
             delete nike.config.rooms[tracker.room.id];
             nike.saveData();

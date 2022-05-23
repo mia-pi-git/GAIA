@@ -5,11 +5,11 @@ import * as PS from 'psim.us';
 import {GAIA} from './main';
 // subfunctions!
 
-export type CommandHandler = (
+export type CommandHandler<T extends Subfunction> = (
     this: PS.Message, target: string, room: PS.Room | null, 
-    user: PS.User, subfunction: Subfunction, cmd: string,
+    user: PS.User, subfunction: T, cmd: string,
 ) => void | Promise<void>;
-export type Commands = Record<string, CommandHandler | string>;
+export type Commands<T extends Subfunction> = Record<string, CommandHandler<T> | string>;
 
 export class SubfunctionTable extends Map<string, Subfunction> {
     // todo figure out how to make this not hardcoded
@@ -26,7 +26,7 @@ export class SubfunctionTable extends Map<string, Subfunction> {
 
 export abstract class Subfunction {
     static functions = new SubfunctionTable();
-    commands: Commands = {};
+    commands: Commands<any> = {};
     subfunctions = Subfunction.functions;
     config: any;
     constructor(public parent: GAIA) {

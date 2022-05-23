@@ -88,7 +88,7 @@ export class Athena extends Subfunction {
         }
     }
     close() {}
-    commands: Commands = {
+    commands: Commands<Athena> = {
         'toggle ATHENA in': 'togglemod',
         async togglemod(target, room, user, subfunction) {
             target = GAIA.toID(target);
@@ -127,15 +127,14 @@ export class Athena extends Subfunction {
             }
         },
         'run ATHENA on': 'atest',
-        async atest(target, room, user) {
+        async atest(target, room, user, sf) {
             if (this.room) {
                 this.room = null;
             }
             if (user.id !== 'mia') return;
-            const athena = GAIA.subfunctions.get("ATHENA");
-            const results = await athena.predict(target);
-            const score = athena.SETTINGS.score(results);
-            const hit = score >= athena.SETTINGS.ACTION_THRESHOLD;
+            const results = await sf.predict(target);
+            const score = sf.SETTINGS.score(results);
+            const hit = score >= sf.SETTINGS.ACTION_THRESHOLD;
             let buf = `Results for "${target}": ${hit ? "hit" : "allowed"} (${score})\n`;
             buf += Object.entries(results)
                 .map(([key, value]) => `${key}: ${value}`)

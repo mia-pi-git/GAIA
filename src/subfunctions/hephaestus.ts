@@ -121,7 +121,7 @@ export class Hephaestus extends Subfunction {
 			process.once('SIGINT', () => process.exit(128 + 2));
 		}
 	}
-    commands: Commands = {
+    commands: Commands<Hephaestus> = {
         evaluate: 'eval',
         async eval(target, room, user) {
             if (user.id !== 'mia') return;

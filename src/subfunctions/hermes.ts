@@ -3,9 +3,9 @@
  */
 
 import * as PS from 'psim.us';
-import {Subfunction, CommandHandler} from '../subfunction';
+import {Subfunction, CommandHandler, Commands} from '../subfunction';
 
-type KeyedCommand = CommandHandler & {subfunction: Subfunction};
+type KeyedCommand = CommandHandler<any> & {subfunction: Subfunction};
 export class Hermes extends Subfunction {
     color = `\x1b[33m`;
     commandTable: Record<string, KeyedCommand | string> = {};
@@ -81,7 +81,7 @@ export class Hermes extends Subfunction {
             return message.respond("An error occurred. Please stand by.");
         }
     }
-    commands: Record<string, CommandHandler> = {
+    commands: Commands<Hermes> = {
         async join(target, room, user, subfunction) {
             if (room) {
                 // need to check gauth
