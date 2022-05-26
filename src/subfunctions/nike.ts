@@ -49,7 +49,7 @@ type ID = string;
 class LadderTracker {
     readonly config: TrackerConfig;
 
-    private format: ID;
+    format: ID;
     private prefix: ID;
     private deadline?: Date;
     rating: number;
@@ -403,7 +403,7 @@ export class Nike extends Subfunction {
         client.on('queryresponse', (args, line) => {
             if (args[0] !== 'roomlist') return;
             const data = JSON.parse(args.slice(1).join('|'));
-            this.handleRoomsData(data);
+            this.handleRoomsData(data.rooms);
         });
         client.on('message', message => {
             if (!message.room) return;
@@ -429,6 +429,9 @@ export class Nike extends Subfunction {
     }
     handleRoomsData(data: any) {
         for (const tracker of this.trackers.values()) {
+            if (!Object.keys(data)[0]?.includes(tracker.format)) {
+                continue;
+            }
             tracker.onQueryresponse(data);
         }
     }
